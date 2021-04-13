@@ -42,6 +42,7 @@ export default function Router(menuDef){
 	}
 
 	function rebuildMenus(curPath){
+		// console.log('rebuilding menus %o', menuPanels);
 		const steps = curPath.split('_');
 		const parts = [];
 		let prev;
@@ -74,9 +75,14 @@ export default function Router(menuDef){
 				}}
 		});
 	}
-	
+
+	window.addEventListener('load', function(){
+		//console.log(document.location.hash);
+		route(document.location.hash.slice(1));
+	});
+
 	return {
-		route,
+		// route,
 		buildMenu
 	};
 }
