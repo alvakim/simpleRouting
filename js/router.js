@@ -8,12 +8,15 @@ const {px,pct,em} = $C.css.unit, css = $C.css.keywords, {border} = $C.css.templa
 export default function Router(menuDef){
 	const menu = menuDef;
 
-	const menuPanels = new Set();
+	const menuPanels = new Map();
 
 	function route(path, pnl, subPathMode=false){
 		if(typeof(pnl)=='string') pnl = document.querySelector(pnl);
 		// console.log('route to "%s"', path);
-		if(!subPathMode) rebuildMenus(path);
+		if(!subPathMode){
+			document.location.hash = path;
+			rebuildMenus(path);
+		}
 		if(typeof(path)=='string') path = path.split('_');
 		// console.log(path);
 		switch(path[0]){
@@ -52,8 +55,10 @@ export default function Router(menuDef){
 			prev = part;
 		}
 
-		for(let pnl of menuPanels){
-			buildMenu(pnl);
+		for(let def of menuPanels.entries()){
+			// console.log('def: %o', def);
+			const [pnl, rootID] = def;
+			buildMenu(pnl, rootID);
 			const items = pnl.querySelectorAll('li>span');
 			// console.log(items);
 			items.forEach(el=>{
@@ -63,11 +68,29 @@ export default function Router(menuDef){
 		}
 	}
 
-	function buildMenu(pnl){
-		menuPanels.add(pnl);
+	function getRootMenu(rootID){
+		if(!rootID) return menu;
+
+		let level = menu;
+		let res = menu;
+		for(let step of rootID.split('_')){
+			for(let el of level){
+				if(el.id==step){
+					level = el.sub;
+					res = el.sub;
+					continue;
+				}
+			}
+		}
+		return res;
+	}
+
+	function buildMenu(pnl, rootID){
+		menuPanels.set(pnl, rootID);
+		const rootMenu = getRootMenu(rootID);
 		const {markup,apply,ul,li,span} = $H;
 		$C.form(pnl, markup(
-				menuItems()
+				menuItems(rootMenu, rootID)
 			),{
 				'.link':{click:function(ev){
 					const id = ev.target.getAttribute('data-id');
