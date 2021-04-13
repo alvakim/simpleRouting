@@ -10,7 +10,17 @@ $C.css.addStylesheet('AppStyles', {
 		display: 'grid',
 		gridTemplateColumns: px(280, css.auto),
 		' .menu':{
-			gridColumnStart: 1
+			gridColumnStart: 1,
+			' li':{
+				margin: px(13, 0),
+				' span':{
+					padding:px(3),
+					'.current':{
+						backgroundColor:'#8ff',
+						color: '#002'
+					}
+				}
+			}
 		},
 		' .content':{
 			gridColumnStart: 2
@@ -18,7 +28,7 @@ $C.css.addStylesheet('AppStyles', {
 	}
 });
 
-const menu = [
+const router = Router([
 	{id:'main', title:'Main', sub:[
 		{target:'page_1', title:'Page 1'},
 		{id:'deeper', title:'Deeper', sub:[
@@ -27,26 +37,15 @@ const menu = [
 		]}
 	]},
 	{target:'page_2', title:'Page 2'}
-];
+]);
 
-function buildMenu(items=menu, rootID){
-	const {markup,apply,ul,li,span} = $H;
-	return ul(
-		apply(items, el=>li(
-			el.target?span({'class':'link', 'data-id':(rootID?rootID+'_':'')+el.target}, el.title)
-				:span(el.title),
-			el.sub?buildMenu(el.sub, (rootID?rootID+'_':'')+el.id):null
-		))
-	);
-}
 
 const {markup,apply,div,span,button} = $H;
 $C.form('#main', markup(
-		div({'class':'menu'}, buildMenu()),
+		div({'class':'menu'}),
 		div({'class':'content'}, 'CONTENT')
 	),{
-		'.link':{click:function(ev){
-			const id = ev.target.getAttribute('data-id');
-			Router.route(id, '#main .content');
+		'.menu':{each:function(el){
+			router.buildMenu(el);
 		}}
 });
