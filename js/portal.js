@@ -7,6 +7,10 @@ const $H = $C.simple;
 const {px,pct,em} = $C.css.unit, css = $C.css.keywords, {border} = $C.css.template;
 
 $C.css.addStylesheet('PortalStyles', {
+	'a.current':{
+		backgroundColor:'#8ff',
+		color: '#002'
+	},
 	'#main':{
 		display: 'grid',
 		height:'80vh',
@@ -41,7 +45,7 @@ $C.css.addStylesheet('PortalStyles', {
 			gridRowStart:2,
 			gridRowEnd:3,
 			' li':{
-				display: css.inline
+				// display: css.inline
 			}
 		},
 		' .recent':{
@@ -75,8 +79,8 @@ const router = Router({
 		'org': function(path, pnl){orgView(path, pnl);},
 		'usr': function(path, pnl){
 			const nr = path[0];
-			import('../portal/usr.js').then(mod=>{
-				mod.view(pnl);
+			import('../portal/usr.js?t'+new Date().getTime()).then(mod=>{
+				mod.view(path, pnl);
 			});
 		},
 		'srv': function(path, pnl){
@@ -88,15 +92,24 @@ const router = Router({
 	}
 });
 
-const {markup,apply,div,span,button} = $H;
+const {markup,apply,div,span,button,ul,li,a} = $H;
 $C.form('#main', markup(
 		div({'class':'pnl menu mainMenu'}),
-		div({'class':'pnl selected'}, 'Selected'),
+		div({'class':'pnl selected'}, 
+			div('Selected'),
+			ul(
+				li(a({href:'#main_usr_phones_1'}, 'Иванов И.И.')),
+				li(a({href:'#main_usr_phones_2'}, 'Петров П.П.'))
+			)
+		),
 		div({'class':'pnl recent'}, 'Recent'),
 		div({'class':'pnl content'}, 'CONTENT')
 	),{
 		'.mainMenu':{each:function(el){
 			router.buildMenu(el, 'main');
+		}},
+		'.selected a':{click:function(ev){
+			router.route(ev.target.getAttribute('href').slice(1));
 		}}
 });
 

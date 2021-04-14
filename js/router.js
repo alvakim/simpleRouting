@@ -16,12 +16,15 @@ export default function Router(config){
 	function route(path, subPathMode=false){
 		let pnl = contentPanel;
 		if(typeof(pnl)=='string') pnl = document.querySelector(pnl);
-		// console.log('route to "%s"', path);
+		// console.log('route to %o from "%s"', path, rootPath);
 		if(!subPathMode){
 			document.location.hash = path;
 			rebuildMenus(path);
 		}
-		if(typeof(path)=='string') path = path.split(sep);
+		if(typeof(path)=='string'){
+			path = path.replace(/^#/g, '');
+			path = path.split(sep);
+		}
 		if(path.length){
 			const pathHead = path[0], pathTail = path.slice(1);
 			
@@ -96,14 +99,21 @@ export default function Router(config){
 		});
 	}
 
+	function buildPath(...args){
+		const path = args.join(sep);
+		return [rootPath, path].join(sep);
+	}
+
 	function init(path){
-		if(path.join) path.join(sep);
+		if(path instanceof Array) path = path.join(sep);
 		route((rootPath?rootPath+sep:'')+path);
 	}
 
 	return {
 		init,
-		buildMenu
+		buildMenu,
+		buildPath,
+		route
 	};
 }
 
