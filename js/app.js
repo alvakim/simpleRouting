@@ -46,24 +46,34 @@ $C.css.addStylesheet('AppStyles', {
 	}
 });
 
-const router = Router([
-	{id:'main', title:'Main', sub:[
-		{target:'page_1', title:'Page 1'},
-		{id:'deeper', title:'Deeper', sub:[
-			{target:'page_3_xx', title:'Page 3 (xx item)'},
-			{target:'page_4', title:'Page 4'}
+const router = Router({
+	contentPanel:'#main .content',
+	menuMap:[
+		{id:'main', title:'Main', sub:[
+			{target:'page:1', title:'Page 1'},
+			{id:'deeper', title:'Deeper', sub:[
+				{target:'page:3:xx', title:'Page 3 (xx item)'},
+				{target:'page:4', title:'Page 4'}
+			]},
+			{target:'page:2', title:'Page 2'}
 		]},
-		{target:'page_2', title:'Page 2'}
-	]},
-	{id:'optional', title:'Optional', sub:[
-		{id:'thirdPage', title:'Page 3', sub:[
-			{target:'page_3_abc', title:'ABC'},
-			{target:'page_3_def', title:'DEF'},
-			{target:'page_3_ghi', title:'GHI'}
+		{id:'optional', title:'Optional', sub:[
+			{id:'thirdPage', title:'Page 3', sub:[
+				{target:'page:3:abc', title:'ABC'},
+				{target:'page:3:def', title:'DEF'},
+				{target:'page:3:ghi', title:'GHI'}
+			]}
 		]}
-	]}
-]);
-
+	],
+	handlers:{
+		'page':function(path, pnl){
+			const nr = path[0];
+			import(`../pages/p${nr}.js?t=${new Date().getTime()}`).then(pp=>{
+				pp.view(path.slice(1));
+			});
+		}
+	}
+});
 
 const {markup,apply,div,span,button} = $H;
 $C.form('#main', markup(
@@ -75,7 +85,10 @@ $C.form('#main', markup(
 			router.buildMenu(el);
 		}},
 		'.thirdPageMenu':{each:function(el){
-			router.buildMenu(el, 'optional_thirdPage');
+			router.buildMenu(el, 'optional:thirdPage');
 		}}
 });
 
+window.addEventListener('load', function(){
+	router.init(document.location.hash.slice(1));
+});

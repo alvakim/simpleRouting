@@ -4,63 +4,60 @@ const $C = Clarino.version('2.4.1');
 const $H = $C.simple;
 const {px,pct,em} = $C.css.unit, css = $C.css.keywords, {border} = $C.css.template;
 
+const defaultSeparator = ':';
 
-export default function Router(menuDef){
-	const menu = menuDef;
+
+export default function Router(config){
+	const {rootPath, contentPanel, menuMap, handlers, pathSeparator} = config;
+	const sep = pathSeparator ?? defaultSeparator;
 
 	const menuPanels = new Map();
 
-	function route(path, pnl, subPathMode=false){
+	function route(path, subPathMode=false){
+		let pnl = contentPanel;
 		if(typeof(pnl)=='string') pnl = document.querySelector(pnl);
 		// console.log('route to "%s"', path);
 		if(!subPathMode){
 			document.location.hash = path;
 			rebuildMenus(path);
 		}
-		if(typeof(path)=='string') path = path.split('_');
-		// console.log(path);
-		switch(path[0]){
-			case 'page': viewPage(path.slice(1), pnl); break;
-			default: route(path.slice(1), pnl, true);
+		if(typeof(path)=='string') path = path.split(sep);
+		if(path.length){
+			const pathHead = path[0], pathTail = path.slice(1);
+			
+			const modLoader = handlers[pathHead];
+			if(modLoader) modLoader(pathTail, pnl);
+			else route(pathTail, true);
 		}
 	}
 
-	function viewPage(path, pnl){
-		const nr = path[0];
-		// pnl.innerHTML = 'page '+nr;
-		import(`../pages/p${nr}.js?t=${new Date().getTime()}`).then(pp=>{
-			pp.view(path.slice(1));
-		});
-	}
-
-	function menuItems(items=menu, rootID){
+	function menuItems(items=menuMap, rootID){
 		const {markup,apply,ul,li,span} = $H;
+		const rootRef = ()=> (rootPath?rootPath+sep:'')+(rootID?rootID+sep:'');
+
 		return ul(
 			apply(items, el=>li(
-				el.target?span({'class':'link', 'data-id':(rootID?rootID+'_':'')+el.target}, el.title)
-					:span({'data-id':(rootID?rootID+'_':'')+el.id}, el.title),
-				el.sub?menuItems(el.sub, (rootID?rootID+'_':'')+el.id):null
+				el.target?span({'class':'link', 'data-id':rootRef()+el.target}, el.title)
+					:span({'data-id':rootRef()+el.id}, el.title),
+				el.sub?menuItems(el.sub, rootRef()+el.id):null
 			))
 		);
 	}
 
 	function rebuildMenus(curPath){
-		// console.log('rebuilding menus %o', menuPanels);
-		const steps = curPath.split('_');
+		const steps = curPath.split(sep);
 		const parts = [];
 		let prev;
 		for(let st of steps){
-			const part = (prev?prev+'_':'')+st;
+			const part = (prev?prev+sep:'')+st;
 			parts.push(part);
 			prev = part;
 		}
 
 		for(let def of menuPanels.entries()){
-			// console.log('def: %o', def);
 			const [pnl, rootID] = def;
 			buildMenu(pnl, rootID);
 			const items = pnl.querySelectorAll('li>span');
-			// console.log(items);
 			items.forEach(el=>{
 				const id = el.getAttribute('data-id');
 				if(parts.includes(id)) el.classList.add('current');
@@ -69,11 +66,11 @@ export default function Router(menuDef){
 	}
 
 	function getRootMenu(rootID){
-		if(!rootID) return menu;
+		if(!rootID) return menuMap;
 
-		let level = menu;
-		let res = menu;
-		for(let step of rootID.split('_')){
+		let level = menuMap;
+		let res = menuMap;
+		for(let step of rootID.split(sep)){
 			for(let el of level){
 				if(el.id==step){
 					level = el.sub;
@@ -94,18 +91,18 @@ export default function Router(menuDef){
 			),{
 				'.link':{click:function(ev){
 					const id = ev.target.getAttribute('data-id');
-					route(id, '#main .content');
+					route(id);
 				}}
 		});
 	}
 
-	window.addEventListener('load', function(){
-		//console.log(document.location.hash);
-		route(document.location.hash.slice(1));
-	});
+	function init(path){
+		if(path.join) path.join(sep);
+		route((rootPath?rootPath+sep:'')+path);
+	}
 
 	return {
-		// route,
+		init,
 		buildMenu
 	};
 }
