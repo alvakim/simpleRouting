@@ -13,7 +13,7 @@ $C.css.addStylesheet('PortalStyles', {
 	},
 	'#main':{
 		display: 'grid',
-		height:'80vh',
+		height:px(400),
 		gridTemplateColumns: px(280, css.auto),
 		gridTemplateRows: px(70, 200, css.auto),
 		' .pnl':{
